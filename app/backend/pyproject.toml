@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gerenciador-estoque-carros"
 version = "0.1.0"
-description = "Um sistema simples de gerenciamento de estoque de carros com FastAPI"
+description = "Sistema de Gerenciamento de Estoque da Leal Car"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -13,12 +13,15 @@ dependencies = [
     "uvicorn",
     "jinja2",
     "python-multipart",
+    "sqlalchemy",
+    "pydantic",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "httpx",
 ]
 
 [tool.setuptools]
-py-modules = ["main", "car_service", "database", "schemas"]
+packages = ["src"]

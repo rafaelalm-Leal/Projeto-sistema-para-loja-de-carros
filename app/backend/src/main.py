@@ -1,7 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.controllers import car_controller, user_controller
+from src.controllers import car_controller
+from src.repositories import database, entities
+from fastapi.responses import JSONResponse
+
+database.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 
@@ -14,4 +18,3 @@ app.add_middleware(
 )
 
 app.include_router(car_controller.router)
-app.include_router(user_controller.router)

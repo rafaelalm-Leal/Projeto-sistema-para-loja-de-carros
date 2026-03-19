@@ -1,61 +1,38 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, HTTPException, status, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from src.repositories.database import get_db
 from src.services import car_service
-from src.models.car_schema import Car
+from src.schemas.car_schema import CarCreate, CarUpdate, CarResponse
 
-router = APIRouter(prefix="/cars")
-
-@router.get("/")
-def listar_carros():
-    return car_service.get_all()
-
-@router.post("/")
-def criar_carro(
-    placa: str = Form(...),
-    modelo: str = Form(...),
-    marca: str = Form(...),
-    ano: int = Form(...),
-    preco: float = Form(...),
-    disponibilidade: bool = Form(True),
-    acesso: str = ""
-):
-    if acesso != "liberado":
-        return {"erro": "Acesso negado"}
-    
-    car_data = Car(
-        placa=placa,
-        modelo=modelo,
-        marca=marca,
-        ano=ano,
-        preco=preco,
-        disponivel=disponibilidade,
-        foto="" # Adicionado campo obrigatório do schema
-    )
-
-    result = car_service.create(car_data.dict())
-    if "erro" in result:
-        return result
-    return {"mensagem": "Carro cadastrado com sucesso"}
+router = APIRouter(prefix="/cars", tags=["cars"])
 
 
-@router.get("/{placa}")
-def buscar_carro(placa: str):
-    carro = car_service.get_by_placa(placa)
-    if carro:
-        return carro
-    return {"erro": "Carro não encontrado"}
+@router.get("/", response_model=list[CarResponse])
+def list_cars(db: Session = Depends(get_db)):
+    return car_service.list_cars(db)
 
 
-@router.patch("/{placa}")
-def atualizar_carro(placa: str, dados: dict):
-    carro = car_service.update(placa, dados)
-    if carro:
-        return carro
-    return {"erro": "Carro não encontrado"}
+@router.post("/", response_model=CarResponse, status_code=status.HTTP_201_CREATED)
+def create_car(car_data: CarCreate, db: Session = Depends(get_db)):
+    return car_service.create_car(db, car_data)
 
 
-@router.delete("/{placa}")
-def deletar_carro(placa: str):
-    if car_service.delete(placa):
-        return {"mensagem": "Carro removido"}
-    return {"erro": "Carro não encontrado"}
+@router.get("/{placa}", response_model=CarResponse)
+def search_car(placa: str, db: Session = Depends(get_db)):
+    return car_service.search_car(db, placa)
 
+
+@router.patch("/{placa}", response_model=CarResponse)
+def update_car(placa: str, car_data: CarUpdate, db: Session = Depends(get_db)):
+    return car_service.update_car(db, placa, car_data.model_dump(exclude_none=True))
+
+
+@router.delete("/{placa}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_car(placa: str, db: Session = Depends(get_db)):
+    return car_service.delete_car(db, placa)
+
+
+@router.post("/{placa}/sell", response_model=CarResponse)
+def sell_car(placa: str, db: Session = Depends(get_db)):
+    return car_service.sell_car(db, placa)

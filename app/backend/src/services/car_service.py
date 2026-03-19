@@ -1,37 +1,47 @@
-from src.repositories.database import carregar_carros, salvar_carros
+from sqlalchemy.orm import Session
+from src.repositories.entities import CarModel
 
-def create(novo_carro):
-    cars = carregar_carros()
-    if get_by_placa(novo_carro["placa"]):
-        return {"erro": "Carro com esta placa já existe"}
-    cars.append(novo_carro)
-    salvar_carros(cars)
-    return novo_carro
+def list_cars(db: Session):
+    return db.query(CarModel).all()
 
-def get_all():
-    return carregar_carros()
+def create_car(db: Session, car_data):
+    if get_car_internal(db, car_data.placa):
+        raise ValueError(f"Carro com placa {car_data.placa} já existe")
+    
+    db_car = CarModel(**car_data.model_dump())
+    db.add(db_car)
+    db.commit()
+    db.refresh(db_car)
+    return db_car
 
-def get_by_placa(placa):
-    cars = carregar_carros()
-    for carro in cars:
-        if carro["placa"].upper() == placa.upper():
-            return carro
-    return None
+def get_car_internal(db: Session, placa: str):
+    return db.query(CarModel).filter(CarModel.placa == placa).first()
 
-def update(placa, dados):
-    cars = carregar_carros()
-    for carro in cars:
-        if carro["placa"].upper() == placa.upper():
-            carro.update(dados)
-            salvar_carros(cars)
-            return carro
-    return None
+def search_car(db: Session, placa: str):
+    car = get_car_internal(db, placa)
+    if not car:
+        raise ValueError(f"Carro com placa {placa} não encontrado")
+    return car
 
-def delete(placa):
-    cars = carregar_carros()
-    for carro in cars:
-        if carro["placa"].upper() == placa.upper():
-            cars.remove(carro)
-            salvar_carros(cars)
-            return True
-    return False
+def update_car(db: Session, placa: str, car_data: dict):
+    db_car = search_car(db, placa)
+    
+    for key, value in car_data.items():
+        setattr(db_car, key, value)
+    
+    db.commit()
+    db.refresh(db_car)
+    return db_car
+
+def delete_car(db: Session, placa: str):
+    db_car = search_car(db, placa)
+    db.delete(db_car)
+    db.commit()
+    return True
+
+def sell_car(db: Session, placa: str):
+    db_car = search_car(db, placa)
+    db_car.disponibilidade = False
+    db.commit()
+    db.refresh(db_car)
+    return db_car

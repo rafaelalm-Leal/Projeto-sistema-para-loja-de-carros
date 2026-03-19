@@ -1,16 +1,21 @@
-import json
 import os
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ARQUIVO = os.path.join(BASE_DIR, "cars.json")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'cars.db')}"
 
-def salvar_carros(cars):
-    with open(ARQUIVO, "w") as arquivo:
-            json.dump(cars, arquivo, indent=4)
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def carregar_carros():
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
     try:
-        with open(ARQUIVO, "r") as arquivo:
-            return json.load(arquivo)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
+        yield db
+    finally:
+        db.close()
