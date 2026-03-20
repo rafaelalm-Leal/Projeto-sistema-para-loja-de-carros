@@ -7,7 +7,6 @@ class CarBase(BaseModel):
     modelo: str
     ano: int
     preco: float
-    disponibilidade: bool = True
     foto: Optional[str] = None
 
 class CarCreate(CarBase):
@@ -18,7 +17,6 @@ class CarUpdate(BaseModel):
     modelo: Optional[str] = None
     ano: Optional[int] = None
     preco: Optional[float] = None
-    disponibilidade: Optional[bool] = None
     foto: Optional[str] = None
 
 class CarResponse(CarBase):

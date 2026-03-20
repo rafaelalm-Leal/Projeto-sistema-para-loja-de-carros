@@ -9,8 +9,8 @@ router = APIRouter(prefix="/cars", tags=["cars"])
 
 
 @router.get("/", response_model=list[CarResponse])
-def list_cars(db: Session = Depends(get_db)):
-    return car_service.list_cars(db)
+def list_cars(placa: str | None = None, db: Session = Depends(get_db)):
+    return car_service.list_cars(db, placa)
 
 
 @router.post("/", response_model=CarResponse, status_code=status.HTTP_201_CREATED)
@@ -31,8 +31,3 @@ def update_car(placa: str, car_data: CarUpdate, db: Session = Depends(get_db)):
 @router.delete("/{placa}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_car(placa: str, db: Session = Depends(get_db)):
     return car_service.delete_car(db, placa)
-
-
-@router.post("/{placa}/sell", response_model=CarResponse)
-def sell_car(placa: str, db: Session = Depends(get_db)):
-    return car_service.sell_car(db, placa)

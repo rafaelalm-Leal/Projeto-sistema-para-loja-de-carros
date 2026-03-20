@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float
 from src.repositories.database import Base
 
 class CarModel(Base):
@@ -9,5 +9,4 @@ class CarModel(Base):
     modelo = Column(String)
     ano = Column(Integer)
     preco = Column(Float)
-    disponibilidade = Column(Boolean, default=True)
     foto = Column(String, nullable=True)

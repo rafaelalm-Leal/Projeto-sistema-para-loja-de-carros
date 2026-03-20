@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: import.meta.env.DEV ? 'http://localhost:8000' : '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,12 +13,13 @@ export interface Car {
   modelo: string;
   ano: number;
   preco: number;
-  disponibilidade: boolean;
   foto?: string | null;
 }
 
-export const fetchCars = async (): Promise<Car[]> => {
-  const response = await api.get('/cars/');
+export const fetchCars = async (placa?: string): Promise<Car[]> => {
+  const response = await api.get('/cars/', {
+    params: { placa }
+  });
   return response.data;
 };
 
@@ -27,13 +28,7 @@ export const fetchCarByPlaca = async (placa: string): Promise<Car> => {
   return response.data;
 };
 
-// Optionally if the user wants to mark it as sold:
-export const sellCar = async (placa: string): Promise<Car> => {
-  const response = await api.post(`/cars/${placa}/sell`);
-  return response.data;
-};
-
-export const createCar = async (carData: Omit<Car, "foto" | "disponibilidade"> & { foto?: string | null, disponibilidade?: boolean }): Promise<Car> => {
+export const createCar = async (carData: Omit<Car, "foto"> & { foto?: string | null }): Promise<Car> => {
   const response = await api.post('/cars/', carData);
   return response.data;
 };

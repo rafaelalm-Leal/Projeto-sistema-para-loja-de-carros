@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { fetchCars, fetchCarByPlaca, createCar, updateCar, deleteCar, type Car } from '../services/api';
+import { fetchCars, createCar, updateCar, deleteCar, type Car } from '../services/api';
 import { Header } from '../components/Header';
 import { CarCard } from '../components/CarCard';
 import { CarModal } from '../components/CarModal';
-import { FloatingActionButton } from '../components/FloatingActionButton';
-import axios from 'axios';
+import { FloatingActions } from '../components/FloatingActions';
 
 export const Home: React.FC = () => {
   const [cars, setCars] = useState<Car[]>([]);
@@ -14,6 +13,9 @@ export const Home: React.FC = () => {
   // Modal and Form States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCar, setEditingCar] = useState<Car | null>(null);
+  
+  // Utilizando sessionStorage para manter a senha apenas durante a sessão ativa.
+  const [isAuthenticated, setIsAuthenticated] = useState(sessionStorage.getItem('lealcar_auth') === 'true');
 
   const loadCars = async () => {
     try {
@@ -33,22 +35,17 @@ export const Home: React.FC = () => {
   }, []);
 
   const handleSearch = async (placa: string) => {
-    if (!placa.trim()) {
-      return loadCars();
-    }
-    
     try {
       setLoading(true);
       setError(null);
-      const car = await fetchCarByPlaca(placa.toUpperCase());
-      setCars([car]);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
-        setCars([]);
+      const data = await fetchCars(placa.toUpperCase());
+      setCars(data);
+      
+      if (data.length === 0 && placa.trim() !== '') {
         setError(`Nenhum carro encontrado com a placa ${placa.toUpperCase()}`);
-      } else {
-        setError('Ocorreu um erro ao buscar os dados.');
       }
+    } catch (err) {
+      setError('Ocorreu um erro ao buscar os dados.');
     } finally {
       setLoading(false);
     }
@@ -56,16 +53,19 @@ export const Home: React.FC = () => {
 
   // Simple Authentication Verification
   const checkAuth = (): boolean => {
-    if (localStorage.getItem('lealcar_auth') === 'true') return true;
+    if (isAuthenticated) return true;
     
-    const pwd = prompt('Acesso Restrito: Digite a senha para realizar esta ação:');
-    if (pwd === 'lealcar') {
-      localStorage.setItem('lealcar_auth', 'true');
+    // Prompt invisível não é possível nativamente, mas para funcionalidade simples:
+    const pwd = window.prompt('Acesso Restrito: Digite a senha do administrador:');
+    
+    if (pwd !== null && pwd.trim().toLowerCase() === 'lealcar') {
+      sessionStorage.setItem('lealcar_auth', 'true');
+      setIsAuthenticated(true);
       return true;
     }
     
     if (pwd !== null) {
-      alert('Senha incorreta! Você não tem permissão para alterar o estoque.');
+      alert('Senha incorreta!');
     }
     return false;
   };
@@ -86,36 +86,43 @@ export const Home: React.FC = () => {
   };
 
   const handleDeleteClick = async (placa: string) => {
-    if (checkAuth() && window.confirm(`ATENÇÃO! Tem certeza que deseja remover o carro de placa ${placa}? Essa ação não pode ser desfeita.`)) {
-      try {
-        setLoading(true);
-        await deleteCar(placa);
-        await loadCars();
-      } catch (err) {
-        alert('Erro ao excluir carro.');
-        setLoading(false);
+    if (checkAuth()) {
+      if (window.confirm(`ATENÇÃO! Deseja remover o carro ${placa}?`)) {
+        try {
+          setLoading(true);
+          await deleteCar(placa);
+          await loadCars();
+        } catch (err) {
+          alert('Erro ao excluir carro.');
+          setLoading(false);
+        }
       }
     }
   };
 
   const handleSaveCar = async (carData: any) => {
-    if (editingCar) {
-      await updateCar(editingCar.placa, carData);
-    } else {
-      await createCar(carData);
+    try {
+      if (editingCar) {
+        await updateCar(editingCar.placa, carData);
+      } else {
+        await createCar(carData);
+      }
+      await loadCars();
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      throw err;
     }
-    await loadCars();
   };
 
   return (
     <>
       <Header onSearch={handleSearch} />
       
-      <main className="grid-container relative pb-20">
+      <main className="grid-container relative pb-32">
         {error && (
           <div className="callout alert border-l-4 border-red-500 bg-red-50 text-red-700 p-4 rounded-md shadow-sm mb-6">
             <p className="font-medium m-0 flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+              <svg style={{width: '1.25rem', height: '1.25rem', marginRight: '0.5rem'}} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
               {error}
             </p>
           </div>
@@ -140,7 +147,7 @@ export const Home: React.FC = () => {
             
             {!loading && cars.length === 0 && !error && (
               <div className="cell small-12 text-center mt-12">
-                <div className="text-6xl mb-4 opacity-50">🚙</div>
+                <div className="text-6xl mb-4 opacity-50">🚗</div>
                 <h4 className="text-gray-500 font-semibold mb-2">Nenhum veículo disponível no momento.</h4>
                 <p className="text-gray-400">Tente buscar por outra placa ou adicione um novo carro ao estoque.</p>
               </div>
@@ -149,7 +156,7 @@ export const Home: React.FC = () => {
         )}
       </main>
 
-      <FloatingActionButton onClick={handleAddClick} />
+      <FloatingActions onAddClick={handleAddClick} />
       
       <CarModal 
         isOpen={isModalOpen} 

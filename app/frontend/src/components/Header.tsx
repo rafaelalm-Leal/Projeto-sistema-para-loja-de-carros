@@ -7,29 +7,41 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
   const [placa, setPlaca] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(placa);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPlaca(value);
+    onSearch(value);
   };
+
+  const [hasLogo, setHasLogo] = useState(true);
 
   return (
     <header className="search-header">
       <div className="grid-container">
         <div className="grid-x grid-margin-x align-middle">
           <div className="cell small-12 medium-4">
-            <h1 className="logo">Leal<span>Car</span></h1>
+            <div className="logo-container">
+              {hasLogo ? (
+                <img 
+                  src="/logo.png" 
+                  alt="Leal Car Logo" 
+                  className="header-logo"
+                  onError={() => setHasLogo(false)}
+                />
+              ) : (
+                <h1 className="logo">Leal<span>Car</span></h1>
+              )}
+            </div>
           </div>
           <div className="cell small-12 medium-8">
-            <form onSubmit={handleSubmit}>
-              <div className="search-container">
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar Carro por Placa..." 
-                  value={placa}
-                  onChange={(e) => setPlaca(e.target.value)}
-                />
-              </div>
-            </form>
+            <div className="search-container">
+              <input 
+                type="text" 
+                placeholder="Pesquisar Carro por Placa..." 
+                value={placa}
+                onChange={handleChange}
+              />
+            </div>
           </div>
         </div>
       </div>
