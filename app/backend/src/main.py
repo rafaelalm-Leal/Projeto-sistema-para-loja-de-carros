@@ -24,9 +24,18 @@ async def permission_error_handler(request, exc: PermissionError):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+import os
+
 app.include_router(car_controller.router)
+
+dist_path = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+if os.path.exists(dist_path):
+    app.mount("/", StaticFiles(directory=dist_path, html=True), name="frontend")
+else:
+    print(f"Aviso: Pasta de produção do frontend não encontrada em {dist_path} (Rode npm run build no frontend)")

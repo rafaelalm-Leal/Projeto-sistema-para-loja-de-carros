@@ -1,44 +1,32 @@
-# Sistema de Gerenciamento de Estoque de Carros
+# Sistema da Concessionária Leal Car 🚗
 
-## Pré-requisitos
+Este é um projeto desenvolvido para a concessionária Leal Car.
 
-- Python 3.10+
+## Estrutura do Projeto
 
-## Como executar
+O projeto é dividido em duas partes principais:
 
-### 1. Clone/entre na pasta do projeto
+1. **`app/backend/`**: API construída com **FastAPI** e **SQLite**.
+2. **`app/frontend/`**: Interface web moderna construída com **React**, **Vite** e **TypeScript**.
+---
 
-```bash
-git clone https://github.com/rafaelalm-Leal/gerenciador-estoque-carros.git
-cd gerenciador-estoque-carros
+## Como Rodar o Projeto
+
+Para usar o sistema completo no seu computador ou disponibilizá-lo para outros dispositivos pela internet, unificamos a execução.
+
+Criamos um script automático para Windows que compila o frontend recém atualizado e levanta o servidor inteiro de uma vez só.
+
+Para acessar a Leal Car de outro dispositivo, usaremos o **Ngrok** para tunelamento temporário seguro na web que redireciona direto para o seu PC.
+
+**Passo a passo:**
+1. Crie uma conta em [ngrok.com](https://ngrok.com) e baixe o aplicativo.
+2. Inicie o sistema usando o `start.bat` (deixe a janela preta aberta rodando).
+3. Abra **outro** terminal e execute o ngrok apontando para a porta do nosso sistema:
+```cmd
+ngrok http 8000
 ```
+4. O ngrok vai gerar uma tela com um link que se parece com isso: `https://abcd-123-456.ngrok-free.app` (Forwarding).
+5. Copie esse link e abra em qualquer dispositivo.
 
-### 2. Crie e ative o ambiente virtual
-
-```bash
-python -m venv venv
-source venv/bin/activate   # Linux/macOS
-# ou: .\venv\Scripts\Activate.ps1   # Windows
-```
-
-### 3. Instale as dependências
-
-```bash
-pip install -e ".[dev]"
-```
-
-### 4. Suba a API
-
-Na raiz do projeto:
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 5000 --reload
-```
-
-- **Swagger:** http://localhost:5000/docs
-
-### 5. Testes
-
-```bash
-pytest -v
-```
+---
+*Para desenvolvimento tradicional ou edição separada de cada pasta, consulte o README de cada diretório individual (`app/backend` e `app/frontend`).*
